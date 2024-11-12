@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Todo App</title>
+    <style>
+        /* CSS Variables for light and dark themes */
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #333;
+            --container-bg: white;
+            --button-bg: #4CAF50;
+            --button-hover-bg: #45a049;
+            --important-bg: #ffeb3b;
+            --important-text-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode {
+            --bg-color: #282c36;
+            --text-color: #f5f5f5;
+            --container-bg: #333;
+            --button-bg: #5cb85c;
+            --button-hover-bg: #6ea56e;
+            --important-bg: #ffa000;
+            --important-text-color: #fff;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 6px 10px var(--shadow-color);
+            width: 100%;
+            max-width: 400px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: var(--button-bg);
+            animation: slideDown 0.5s ease-in;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 0.7rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            box-sizing: border-box;
+            transition: transform 0.1s ease, background-color 0.3s;
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #todo_display {
+            margin-top: 1.5rem;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            margin-bottom: 0.5rem;
+            background-color: var(--container-bg);
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-item button {
+            width: auto;
+            padding: 0.25rem 0.5rem;
+            margin: 0;
+            border-radius: 12px;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .important {
+            background-color: var(--important-bg);
+            color: var(--important-text-color);
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enhanced Todo App</h1>
+        <button onclick="toggleDarkMode()" id="darkModeToggle">Switch to Dark Mode</button>
+        <input type="text" id="todo_title" placeholder="Enter todo title">
+        <input type="text" id="todo_desc" placeholder="Enter todo description">
+        <button onclick="performOperation()">Add Todo</button>
+
+        <div class="search-container">
+            <input type="text" id="search_input" placeholder="Search todos" oninput="filterTodos()">
+            <button onclick="clearCompleted()">Clear Completed</button>
+        </div>
+
+        <div id="todo_display"></div>
+    </div>
+
+    <script>
+        const titleInput = document.getElementById("todo_title");
+        const descInput = document.getElementById("todo_desc");
+        const todoDisplay = document.getElementById("todo_display");
+        let todos = [];
+
+        function performOperation() {
+            if (!titleInput.value.trim() || !descInput.value.trim()) {
+                alert("Please enter both title and description.");
+                return;
+            }
+
+            const newTodo = {
+                title: titleInput.value,
+                desc: descInput.value,
+                completion: false,
+                important: false
+            };
+            todos.push(newTodo);
+            updateTodoDisplay();
+            titleInput.value = "";
+            descInput.value = "";
+        }
+
+        function updateTodoDisplay() {
+            const searchQuery = document.getElementById("search_input").value.toLowerCase();
+            todoDisplay.innerHTML = "";
+            todos.forEach(function(elements, index) {
+                if (elements.title.toLowerCase().includes(searchQuery)) {
+                    const todo = document.createElement("div");
+                    todo.className = `todo-item ${elements.important ? 'important' : ''}`;
+                    todo.innerHTML = `
+                        <span class="${elements.completion ? 'completed' : ''}" onclick="editTitle(${index})">
+                            ${elements.title}: ${elements.desc}
+                        </span>
+                        <button onclick="toggle(${index})">
+                            ${elements.completion ? 'Completed' : 'Incomplete'}
+                        </button>
+                        <button onclick="markImportant(${index})">
+                            ${elements.important ? 'Unmark Important' : 'Mark Important'}
+                        </button>
+                    `;
+                    todoDisplay.appendChild(todo);
+                }
+            });
+        }
+
+        function toggle(index) {
+            todos[index].completion = !todos[index].completion;
+            updateTodoDisplay();
+        }
+
+        function markImportant(index) {
+            todos[index].important = !todos[index].important;
+            updateTodoDisplay();
+        }
+
+        function editTitle(index) {
+            const newTitle = prompt("Edit title:", todos[index].title);
+            if (newTitle !== null && newTitle.trim()) {
+                todos[index].title = newTitle.trim();
+                updateTodoDisplay();
+            }
+        }
+
+        function clearCompleted() {
+            todos = todos.filter(todo => !todo.completion);
+            updateTodoDisplay();
+        }
+
+        function filterTodos() {
+            updateTodoDisplay();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const isDarkMode = document.body.classList.contains("dark-mode");
+            document.getElementById("darkModeToggle").innerText = isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode";
+        }
+    </script>
+</body>
+</html>
